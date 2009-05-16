@@ -1,0 +1,14 @@
+*.suo
+*.sln.cache
+*.csproj.user
+*.cachefile
+bin/Content
+bin/*.exe
+bin/*.dll
+bin/*.pdb
+bin/*.xml
+code/*/bin
+code/*/obj
+# for some reason the above two ignores
+# don't work on this directory completely
+code/InfiniminerClient/Content/obj
