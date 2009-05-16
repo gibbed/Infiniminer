@@ -1,26 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Lidgren.Network;
-using Lidgren.Network.Xna;
-using System.Threading;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
+using Lidgren.Network;
+using Lidgren.Network.Xna;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.GamerServices;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
-using Microsoft.Xna.Framework.Net;
-using Microsoft.Xna.Framework.Storage;
 
 namespace Infiniminer
 {
     public class InfiniminerServer
     {
-        NetServer netServer = null;
+        InfiniminerNetServer netServer = null;
         BlockType[, ,] blockList = null;    // In game coordinates, where Y points up.
         PlayerTeam[, ,] blockCreatorTeam = null;
         const int MAPSIZE = 64;
@@ -424,7 +415,7 @@ namespace Infiniminer
             NetConfiguration netConfig = new NetConfiguration("InfiniminerPlus");
             netConfig.MaxConnections = (int)maxPlayers;
             netConfig.Port = 5565;
-            netServer = new NetServer(netConfig);
+            netServer = new InfiniminerNetServer(netConfig);
             netServer.SetMessageTypeEnabled(NetMessageType.ConnectionApproval, true);
             //netServer.SimulatedMinimumLatency = 0.1f;
             //netServer.SimulatedLatencyVariance = 0.05f;
@@ -461,7 +452,12 @@ namespace Infiniminer
                         case NetMessageType.ConnectionApproval:
                             {
                                 Player newPlayer = new Player(msgSender, null);
-                                newPlayer.Handle = InfiniminerGame.Sanitize(msgBuffer.ReadString());
+                                newPlayer.Handle = InfiniminerGame.Sanitize(msgBuffer.ReadString()).Trim();
+                                if (newPlayer.Handle.Length == 0)
+                                {
+                                    newPlayer.Handle = "Player";
+                                }
+
                                 string clientVersion = msgBuffer.ReadString();
                                 if (clientVersion != InfiniminerGame.INFINIMINER_VERSION)
                                 {
@@ -474,6 +470,7 @@ namespace Infiniminer
                                 else
                                 {
                                     playerList[msgSender] = newPlayer;
+                                    this.netServer.SanityCheck(msgSender);
                                     msgSender.Approve();
                                 }
                             }
@@ -481,6 +478,11 @@ namespace Infiniminer
 
                         case NetMessageType.StatusChanged:
                             {
+                                if (!this.playerList.ContainsKey(msgSender))
+                                {
+                                    break;
+                                }
+
                                 Player player = playerList[msgSender];
 
                                 if (msgSender.Status == NetConnectionStatus.Connected)
@@ -503,7 +505,12 @@ namespace Infiniminer
                             break;
 
                         case NetMessageType.Data:
-                            {
+							{
+                                if (!this.playerList.ContainsKey(msgSender))
+                                {
+                                    break;
+                                }
+
                                 Player player = playerList[msgSender];
                                 InfiniminerMessage dataType = (InfiniminerMessage)msgBuffer.ReadByte();
                                 switch (dataType)
@@ -944,7 +951,7 @@ namespace Infiniminer
 
             // If the block is too expensive, bail.
             uint blockCost = BlockInformation.GetCost(blockType);
-            if (sandboxMode)
+            if (sandboxMode && blockCost <= player.OreMax)
                 blockCost = 0;
             if (blockCost > player.Ore)
                 actionFailed = true;
