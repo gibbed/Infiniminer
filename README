@@ -1,0 +1,33 @@
+INFINIMINER
+===========
+
+BUILDING
+========
+
+Building Infiniminer requires Visual Studio 2008 and XNA Game Studio 3.0. 
+
+You'll also probably need the fonts 04b03b and 04b08 from the following site:
+
+http://www.dsg4.com/04/extra/bitmap/
+
+Simply build the solution and you should be good to go.
+
+
+PATCHING
+========
+
+The official branch is maintained by Zach Barth of Zachtronics Industries.
+
+Please submit all patches to zachbarth@gmail.com for inclusion.
+
+http://github.com/krispykrem/Infiniminer/tree/master
+
+http://www.zachtronicsindustries.com
+
+
+LICENSING
+=========
+
+This code is licensed under the BSD license.
+
+http://creativecommons.org/licenses/BSD/
