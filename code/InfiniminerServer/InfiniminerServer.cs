@@ -44,6 +44,8 @@ namespace Infiniminer
         DateTime restartTime = DateTime.Now;
         bool restartTriggered = false;
 
+        uint duplicateNameCount = 0;
+
         public InfiniminerServer()
         {
             Console.SetWindowSize(1, 1);
@@ -188,9 +190,13 @@ namespace Infiniminer
                         {
                             string teamIdent = "";
                             if (p.Team == PlayerTeam.Red)
+                            {
                                 teamIdent = " (R)";
+                            }
                             else if (p.Team == PlayerTeam.Blue)
+                            {
                                 teamIdent = " (B)";
+                            }
                             ConsoleWrite(p.Handle + teamIdent + " - " + p.IP);
                         }
                     }
@@ -453,9 +459,19 @@ namespace Infiniminer
                             {
                                 Player newPlayer = new Player(msgSender, null);
                                 newPlayer.Handle = InfiniminerGame.Sanitize(msgBuffer.ReadString()).Trim();
-                                if (newPlayer.Handle.Length == 0)
+                                if (newPlayer.Handle.Length == 0 || newPlayer.Handle.Length > 20)
                                 {
                                     newPlayer.Handle = "Player";
+                                }
+
+                                foreach (Player oldPlayer in this.playerList.Values)
+                                {
+                                    if (newPlayer.Handle == oldPlayer.Handle)
+                                    {
+                                        this.duplicateNameCount++;
+                                        newPlayer.Handle += "." + this.duplicateNameCount.ToString();
+                                        break;
+                                    }
                                 }
 
                                 string clientVersion = msgBuffer.ReadString();
@@ -612,7 +628,9 @@ namespace Infiniminer
 
                                     case InfiniminerMessage.PlayerDead:
                                         {
-                                            ConsoleWrite("PLAYER_DEAD: " + player.Handle);
+                                            string deathMessage = InfiniminerGame.Sanitize(msgBuffer.ReadString());
+                                            ConsoleWrite("PLAYER_DEAD: " + player.Handle + " " + deathMessage);
+
                                             player.Ore = 0;
                                             player.Cash = 0;
                                             player.Weight = 0;
@@ -620,7 +638,6 @@ namespace Infiniminer
                                             SendResourceUpdate(player);
                                             SendPlayerDead(player);
 
-                                            string deathMessage = msgBuffer.ReadString();
                                             if (deathMessage != "")
                                             {
                                                 msgBuffer = netServer.CreateBuffer();
@@ -628,8 +645,12 @@ namespace Infiniminer
                                                 msgBuffer.Write((byte)(player.Team == PlayerTeam.Red ? ChatMessageType.SayRedTeam : ChatMessageType.SayBlueTeam));
                                                 msgBuffer.Write(player.Handle + " " + deathMessage);
                                                 foreach (NetConnection netConn in playerList.Keys)
+                                                {
                                                     if (netConn.Status == NetConnectionStatus.Connected)
+                                                    {
                                                         netServer.SendMessage(msgBuffer, netConn, NetChannel.ReliableInOrder3);
+                                                    }
+                                                }
                                             }
                                         }
                                         break;
