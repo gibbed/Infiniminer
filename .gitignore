@@ -7,6 +7,7 @@ bin/*.exe
 bin/*.dll
 bin/*.pdb
 bin/*.xml
+bin/*.manifest
 code/*/bin
 code/*/obj
 # for some reason the above two ignores
