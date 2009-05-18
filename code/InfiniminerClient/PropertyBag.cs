@@ -263,7 +263,7 @@ namespace Infiniminer
                 Vector3 startPos = new Vector3(randGen.Next(2, 62), 63, randGen.Next(2, 62));
 
                 // See if this is a safe place to drop.
-                for (startPos.Y = 63; startPos.Y > 54; startPos.Y--)
+                for (startPos.Y = 63; startPos.Y >= 54; startPos.Y--)
                 {
                     BlockType blockType = blockEngine.BlockAtPoint(startPos);
                     if (blockType == BlockType.Lava)
